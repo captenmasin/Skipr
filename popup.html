@@ -1,0 +1,160 @@
+<script src="./js/alpine.js"></script>
+<script src="./js/ruleManager.js"></script>
+<link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+<style>
+    body {
+        min-width: 800px;
+    }
+</style>
+<div class="p-4">
+    <div x-data="{query: '',subject: 'title',modifier: 'starts_with',string: '',seconds: '',rules: [],and: [], ...ruleManager()}">
+        <div class="relative">
+            <h1 class="font-bold text-lg">
+                New rule
+            </h1>
+            <div class="flex space-x-4 pr-16">
+                <select x-model="subject"
+                        class="w-4/12 w-4/12 border border-gray-200 rounded-lg text-base p-2 px-3 focus:outline-none">
+                    <option>Subject</option>
+                    <option value="date">Published date</option>
+                    <option value="title">Title</option>
+                    <option value="channel">Channel</option>
+                </select>
+                <template x-if="subject == 'date'">
+                    <select x-model="modifier"
+                            class="w-4/12 w-4/12 border border-gray-200 rounded-lg text-base p-2 px-3 focus:outline-none">
+                        <option>Modifier</option>
+                        <option value="newer_than">Newer than</option>
+                        <option value="older_than">Older than</option>
+                    </select>
+                </template>
+                <template x-if="subject !== 'date'">
+                    <select x-model="modifier"
+                            class="w-4/12 w-4/12 border border-gray-200 rounded-lg text-base p-2 px-3 focus:outline-none">
+                        <option>Modifier</option>
+                        <option value="starts_with">Starts with</option>
+                        <option value="ends_with">End with</option>
+                        <option value="contains">Contains</option>
+                        <option value="equals">Equals</option>
+                        <option value="not_equals">Does not equal</option>
+                    </select>
+                </template>
+                <template x-if="subject !== 'date'">
+                    <input type="text" x-model="string" placeholder="String"
+                           class="w-4/12 border border-gray-200 rounded-lg text-base p-2 px-3 focus:outline-none"/>
+                </template>
+                <template x-if="subject == 'date'">
+                    <input type="date" x-model="string" placeholder="Date"
+                           class="w-4/12 border border-gray-200 rounded-lg text-base p-2 px-3 focus:outline-none"/>
+                </template>
+            </div>
+            <div class="flex flex-col pr-16 space-y-2">
+                <template x-for="(andRule, index) in and">
+                    <div class="flex space-x-4">
+                        <select x-model="andRule.subject"
+                                class="w-4/12 w-4/12 border border-gray-200 rounded-lg text-base p-2 px-3 focus:outline-none">
+                            <option>Subject</option>
+                            <option value="date">Published date</option>
+                            <option value="title">Title</option>
+                            <option value="channel">Channel</option>
+                        </select>
+                        <template x-if="andRule.subject == 'date'">
+                            <select x-model="andRule.modifier"
+                                    class="w-4/12 w-4/12 border border-gray-200 rounded-lg text-base p-2 px-3 focus:outline-none">
+                                <option>Modifier</option>
+                                <option value="newer_than">Newer than</option>
+                                <option value="older_than">Older than</option>
+                            </select>
+                        </template>
+                        <template x-if="andRule.subject !== 'date'">
+                            <select x-model="andRule.modifier"
+                                    class="w-4/12 w-4/12 border border-gray-200 rounded-lg text-base p-2 px-3 focus:outline-none">
+                                <option>Modifier</option>
+                                <option value="starts_with">Starts with</option>
+                                <option value="ends_with">End with</option>
+                                <option value="contains">Contains</option>
+                                <option value="equals">Equals</option>
+                                <option value="not_equals">Does not equal</option>
+                            </select>
+                        </template>
+                        <template x-if="andRule.subject !== 'date'">
+                            <input type="text" x-model="andRule.string" placeholder="String"
+                                   class="w-4/12 border border-gray-200 rounded-lg text-base p-2 px-3 focus:outline-none"/>
+                        </template>
+                        <template x-if="andRule.subject == 'date'">
+                            <input type="date" x-model="andRule.string" placeholder="Date"
+                                   class="w-4/12 border border-gray-200 rounded-lg text-base p-2 px-3 focus:outline-none"/>
+                        </template>
+                    </div>
+                </template>
+                <button @click="and.push({subject: '', modifier: '', string: ''})"
+                        class="absolute bottom-2 mt-2 rounded-full right-0 text-gray-200 hover:text-gray-500">
+                    <svg class="w-6 h-6 -mb-1" fill="currentColor" viewBox="0 0 20 20"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                              clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <input type="number" x-model="seconds" placeholder="Skip (seconds)"
+                   class="w-2/12 border border-gray-200 rounded-lg text-sm p-2 px-2 focus:outline-none"/>
+
+            <button @click="saveRule()" class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium">
+                Save
+            </button>
+        </div>
+        <h1 class="font-bold text-lg mt-8">
+            Current rules
+        </h1>
+        <div class="divide-y divide-gray-100 mb-4">
+            <div class="flex flex-col">
+                <template x-for="(rule, index) in rules" :key="index">
+                    <div class="flex w-full">
+                        <div class="flex-1 py-2">
+                            <span class="font-mono bg-gray-100 p-1 text-xs">
+                                <span x-text="rule.subject"></span>
+                                <span x-text="rule.modifier"></span>
+                                "<span x-text="rule.string"></span>"
+                            </span>
+                            <template x-for="(andRule, andIndex) in rule.and">
+                                <span>
+                                    <strong class="ml-1">AND</strong>
+                                    <span class="font-mono bg-gray-100 p-1 text-xs">
+                                        <span x-text="andRule.subject"></span>
+                                        <span x-text="andRule.modifier"></span>
+                                        "<span x-text="andRule.string"></span>"
+                                    </span>
+                                </span>
+                            </template>
+                            <div class="bg-blue-500 text-xs p-1 rounded-sm text-white inline-block">
+                                <span>skip </span>
+                                <span x-text="rule.seconds"></span>
+                                <span>seconds</span>
+                            </div>
+                        </div>
+                        <div class="flex-0 py-2">
+                            <button class="flex-0 text-red-500 rounded-full p-1 hover:bg-red-500 hover:text-white"
+                                    @click="deleteRule(rule.id)">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+        <div class="flex justify-end">
+            <button @click="deleteRules"
+                    class="bg-white hover:text-white hover:bg-red-500 text-red-500 px-3 py-2 rounded-md text-sm font-medium mt-4 mr-0">
+                Delete all
+            </button>
+        </div>
+    </div>
+</div>
