@@ -25,13 +25,18 @@ window.ruleManager = function () {
             query.and = JSON.parse(JSON.stringify(document.querySelector('[x-data]').__x.$data.and))
             query.id = Math.floor(Date.now() / 1000);
             chrome.storage.sync.get("skipr_rules", function (items) {
-                var currentRules = items.skipr_rules;
+                if(typeof items.skipr_rules === 'undefined'){
+                    var currentRules = [];
+                } else {
+                    var currentRules = items.skipr_rules;
+                }
                 currentRules.push(query);
                 chrome.storage.sync.set({"skipr_rules": currentRules}, function () {
                     document.querySelector('[x-data]').__x.$data.rules = currentRules;
                     document.querySelector('[x-data]').__x.$data.subject = '';
                     document.querySelector('[x-data]').__x.$data.modifier = '';
                     document.querySelector('[x-data]').__x.$data.string = '';
+                    document.querySelector('[x-data]').__x.$data.seconds = '';
                     document.querySelector('[x-data]').__x.$data.and = [];
                 });
             });
